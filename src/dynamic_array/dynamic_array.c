@@ -6,8 +6,7 @@
 
 DynamicArray *DynamicArray_new() {
   DynamicArray *array = malloc(sizeof(DynamicArray));
-  if (array == NULL)
-    return NULL;
+  if (array == NULL) return NULL;
 
   array->capacity = 16;
   array->array = malloc(array->capacity * sizeof(void *));
@@ -25,26 +24,37 @@ void DynamicArray_destroy(DynamicArray *array) {
   free(array);
 }
 
-void resize(DynamicArray *array) {
+bool resize(DynamicArray *array) {
   if (array->size == array->capacity) {
-    void *new_array = NULL;
-    new_array = realloc(array->array, array->capacity * 2 * sizeof(void *));
+    void *new_array = realloc(array->array, array->capacity * 2 * sizeof(void *));
 
-    array->capacity = array->capacity * 2;
+    if (new_array == NULL) {
+      array->array = new_array;
+      array->capacity = array->capacity * 2;
+      return true;
+    }
 
-    if (new_array != NULL) array->array = new_array;
-    else DynamicArray_destroy(array);
-  } else if (array->size == array->capacity / 4) {
+    DynamicArray_destroy(array);
+    return false;
+  }
+
+  if (array->size == array->capacity / 4) {
     void *new_array = NULL;
     new_array = realloc(array->array, array->capacity / 2 * sizeof(void *));
 
     array->capacity = array->capacity / 2;
 
-    if (new_array != NULL) array->array = new_array;
-    else DynamicArray_destroy(array);
+    if (new_array == NULL) {
+      array->array = new_array;
+      array->capacity = array->capacity / 2;
+      return true;
+    }
+
+    DynamicArray_destroy(array);
+    return false;
   }
 
-
+  return true;
 }
 
 int size(const DynamicArray *array) { return array->size; }
@@ -61,7 +71,7 @@ void *at(const DynamicArray *array, const int index) {
 
 void push(DynamicArray *array, void *item) {
   array->size += 1;
-  resize(array);
+  if (!resize(array)) return;
 
   *(array->array + array->size - 1) = item;
 }
@@ -70,7 +80,7 @@ void insert(DynamicArray *array, int index, void *item) {
   if (is_empty(array) || array->size <= index) return;
 
   array->size += 1;
-  resize(array);
+  if (!resize(array)) return;
 
   memmove(array->array + index + 1, array->array + index, (array->size - index) * sizeof(void*));
 
