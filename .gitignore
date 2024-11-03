@@ -69,7 +69,6 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 
-# Build
 build
-
+**/.DS_Store
 src/main.c
