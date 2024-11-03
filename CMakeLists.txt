@@ -6,4 +6,7 @@ set(CMAKE_C_STANDARD 99)
 add_executable(datastructures src/main.c
         src/linked_list/linked_list.c
         src/linked_list/linked_list.h
+        src/dynamic_array/dynamic_array.c
+        src/dynamic_array/dynamic_array.h
+        src/main.c
 )

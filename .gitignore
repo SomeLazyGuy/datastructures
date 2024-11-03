@@ -71,3 +71,5 @@ CMakeUserPresets.json
 
 # Build
 build
+
+src/main.c
