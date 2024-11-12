@@ -21,5 +21,6 @@ void add(HashTable *hashTable, char *key, int value);
 bool exists(HashTable *hashTable, char *key);
 int get(HashTable *hashTable, char *key);
 void remove_key(HashTable *hashTable, char *key);
+int hash(char *key, int m);
 
 #endif // HASH_TABLE

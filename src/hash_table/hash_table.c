@@ -1,5 +1,7 @@
 #include "hash_table.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 HashTable *HashTable_new() {
 	HashTable *hashTable = malloc(sizeof(HashTable));
@@ -8,28 +10,34 @@ HashTable *HashTable_new() {
 	hashTable->m = 8;
 	hashTable->n = 8;
 
-	hashTable->data = malloc(hashTable->m * sizeof(int));
-	if (hashTable->data == NULL) free(hashTable);
+	hashTable->data = malloc(hashTable->m * sizeof(Entry));
+	if (hashTable->data == NULL) {
+		free(hashTable);
+		return NULL;
+	}
+	for (int i = 0; i < hashTable->m; i++) hashTable->data[i] = NULL;
 
 	return hashTable;
 }
 
 void free_entry(Entry *entry) {
+	printf("Test3");
 	free(entry->key);
+	printf("Test2");
 	free(entry);
 }
 
 void free_chain(Entry *head) {
 	if (head == NULL) return;
 
-	Entry *to_delete = head->next;
-	while (to_delete != NULL) {
-		head->next = to_delete->next;
-		free_entry(to_delete);
-		to_delete = head->next;
-	}
+	Entry *current = head;
+	Entry *next;
 
-	free_entry(head);
+	while (current != NULL) {
+		next = current->next;
+		free(current);
+		current = next;
+	}
 }
 
 void HashTable_destroy(HashTable *hashTable) {
@@ -40,22 +48,9 @@ void HashTable_destroy(HashTable *hashTable) {
 
 int hash(char *key, int m) {
 	int sum = 0;
-	int len_key = sizeof(key) / sizeof(char);
-	for (int i = 0; i < len_key; i++) sum += (int)key[i];
+	for (int i = 0; i < strlen(key); i++) sum += (int)key[i];
+
 	return sum % m;
-}
-
-bool string_equal(char *string1, char* string2) {
-	int len_string1 = sizeof(string1) / sizeof(char);
-	int len_string2 = sizeof(string2) / sizeof(char);
-
-	if (len_string1 != len_string2) return false;
-
-	for (int i = 0; i < len_string1; i++) {
-		if (string1[i] != string2[i]) return false;
-	}
-
-	return true;
 }
 
 void add(HashTable *hashTable, char *key, int value) {
@@ -71,7 +66,7 @@ void add(HashTable *hashTable, char *key, int value) {
 	} else {
 		Entry *last_item = hashTable->data[index];
 		while (last_item->next != NULL) {
-			if (string_equal(key, last_item->key)) {
+			if (strcmp(key, last_item->key) == 0) {
 				last_item->value = value;
 				free(item);
 				return;
@@ -79,7 +74,7 @@ void add(HashTable *hashTable, char *key, int value) {
 			last_item = last_item->next;
 		}
 		
-		if (string_equal(key, last_item->key)) {
+		if (strcmp(key, last_item->key) == 0) {
 			last_item->value = value;
 			free(item);
 			return;
@@ -93,9 +88,9 @@ bool exists(HashTable *hashTable, char *key) {
 	int index = hash(key, hashTable->m);
 
 	Entry *current = hashTable->data[index];
-
 	while (current != NULL) {
-		if (string_equal(key, current->key)) true;
+		if (strcmp(key, current->key) == 0) return true;
+		current = current->next;
 	}
 
 	return false;
@@ -105,10 +100,9 @@ int get(HashTable *hashTable, char *key) {
 	int index = hash(key, hashTable->m);
 
 	Entry *current = hashTable->data[index];
-	if (current == NULL) exit(-1);
-
 	while (current != NULL) {
-		if (string_equal(key, current->key)) return current->value;
+		if (strcmp(key, current->key) == 0) return current->value;
+		current = current->next;
 	}
 
 	exit(-1);
@@ -118,24 +112,21 @@ void remove_key(HashTable *hashTable, char *key) {
 	int index = hash(key, hashTable->m);
 
 	Entry *current = hashTable->data[index];
-	if (current == NULL) return;
+	Entry *prev = NULL;
 
-	if (string_equal(key, current->key)) {
-		hashTable->data[index] = current->next;
-		free(current);
-	}
+	while (current != NULL) {
+		if (strcmp(key, current->key) == 0) {
+			if (prev == NULL) hashTable->data[index] = current->next;
+			else prev->next = current->next;
+			
+			printf("Freeing node with key: %s\n", current->key);
+			free_entry(current);
+			printf("test");
 
-	while (current->next != NULL) {
-		if (string_equal(key, current->next->key)) {
-			Entry *old = current->next;
-			current->next = old->next;
-			free(old);
 			return;
 		}
-	}
 
-	// i know this creates a dangling pointer but i am too lazy to fix it rn
-	if (string_equal(key, current->key)) {
-		free(current);
+		prev = current;
+		current = current->next;
 	}
 }
