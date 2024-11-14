@@ -8,9 +8,9 @@ HashTable *HashTable_new() {
 	if (hashTable == NULL) return NULL;
 
 	hashTable->m = 8;
-	hashTable->n = 8;
+	hashTable->n = 0;
 
-	hashTable->data = malloc(hashTable->m * sizeof(Entry));
+	hashTable->data = malloc(hashTable->m * sizeof(Entry*));
 	if (hashTable->data == NULL) {
 		free(hashTable);
 		return NULL;
@@ -20,18 +20,11 @@ HashTable *HashTable_new() {
 	return hashTable;
 }
 
-void free_entry(Entry *entry) {
-	printf("Test3");
-	free(entry->key);
-	printf("Test2");
-	free(entry);
-}
-
 void free_chain(Entry *head) {
 	if (head == NULL) return;
 
 	Entry *current = head;
-	Entry *next;
+	Entry *next = NULL;
 
 	while (current != NULL) {
 		next = current->next;
@@ -53,6 +46,31 @@ int hash(char *key, int m) {
 	return sum % m;
 }
 
+void rehash_all(HashTable *hashTable, int new_size) {
+	Entry **old_data = hashTable->data;
+	int old_size = hashTable->m;
+
+	hashTable->m = new_size;
+	hashTable->data = malloc(hashTable->m * sizeof(Entry*));
+	for (int i = 0; i < hashTable->m; i++) hashTable->data[i] = NULL;
+
+	hashTable->n = 0;
+	
+	for (int i = 0; i < old_size; i++) {
+		Entry* current = old_data[i];
+		Entry* next = NULL;
+
+		while (current != NULL) {
+			next = current->next;
+			add(hashTable, current->key, current->value);
+			free(current);
+			current = next;
+		}
+	}
+
+	free(old_data);
+}
+
 void add(HashTable *hashTable, char *key, int value) {
 	Entry *item = malloc(sizeof(Entry));
 	if (item == NULL) return;
@@ -63,6 +81,8 @@ void add(HashTable *hashTable, char *key, int value) {
 
 	if (hashTable->data[index] == NULL) {
 		hashTable->data[index] = item;
+		hashTable->n++;
+		if (hashTable->n > hashTable->m / 2) rehash_all(hashTable, hashTable->m * 2);
 	} else {
 		Entry *last_item = hashTable->data[index];
 		while (last_item->next != NULL) {
@@ -81,6 +101,8 @@ void add(HashTable *hashTable, char *key, int value) {
 		}
 
 		last_item->next = item;
+		hashTable->n++;
+		if (hashTable->n > hashTable->m / 2) rehash_all(hashTable, hashTable->m * 2);
 	}
 }
 
@@ -118,10 +140,11 @@ void remove_key(HashTable *hashTable, char *key) {
 		if (strcmp(key, current->key) == 0) {
 			if (prev == NULL) hashTable->data[index] = current->next;
 			else prev->next = current->next;
-			
-			printf("Freeing node with key: %s\n", current->key);
-			free_entry(current);
-			printf("test");
+
+			free(current);
+
+			hashTable->n--;
+			if (hashTable->n <= hashTable->m / 4) rehash_all(hashTable, hashTable->m / 2);
 
 			return;
 		}

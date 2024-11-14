@@ -1,3 +1,0 @@
-rm hash_table
-clang main.c hash_table.c -o hash_table
-./hash_table
