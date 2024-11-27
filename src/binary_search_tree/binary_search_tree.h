@@ -11,7 +11,7 @@ typedef struct node {
 } Node;
 
 Node *Node_new(Node *parent, int value);
-void Node_destroy(Node *node);
+void destroy_tree(Node *root);
 bool search_value(Node *root, int value);
 void insert_value(Node *root, int value);
 void remove_value(Node *root, int value);

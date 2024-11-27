@@ -12,16 +12,16 @@ Node *Node_new(Node *parent, int value) {
 	return node;
 }
 
-void Node_destroy(Node *node) {
-	if (node->left != NULL) {
-		Node_destroy(node->left);
+void destroy_tree(Node *root) {
+	if (root->left != NULL) {
+		destroy_tree(root->left);
 	}
 
-	if (node->right != NULL) {
-		Node_destroy(node->right);
+	if (root->right != NULL) {
+		destroy_tree(root->right);
 	}
 
-	free(node);
+	free(root);
 }
 
 bool search_value(Node *root, int value) {
@@ -58,6 +58,64 @@ void insert_value(Node *root, int value) {
 	}
 }
 
+int get_child_count(Node *node) {
+	int child_count = 0;
+
+	if (node->left != NULL) {
+		child_count++;
+	}
+
+	if (node->right != NULL) {
+		child_count++;
+	}
+
+	return child_count;
+}
+
+void remove_node_no_childs(Node *node) {
+	Node *parent = node->parent;
+	
+	if (parent->left == node) {
+		parent->left = NULL;
+	} else {
+		parent->right = NULL;
+	}
+
+	free(node);
+}
+
+void remove_node_one_child(Node *node) {
+	Node *child = node->left == NULL ? node->right : node->left;
+
+	Node *parent = node->parent;
+
+	if (parent->left == node) {
+		parent->left = child;
+	} else {
+		parent->right = child;
+	}
+
+	free(node);
+}
+
+void remove_node_two_childs(Node *node) {
+	Node *successor = node->right;
+
+	while (successor->left != NULL) {
+		successor = successor->left;
+	}
+
+	node->value = successor->value;
+
+	int child_count = get_child_count(successor);
+
+	if (child_count == 0) {
+		remove_node_no_childs(successor);
+	} else if (child_count == 1) {
+		remove_node_one_child(successor);
+	}
+}
+
 void remove_value(Node *root, int value) {
 	Node *current = root;
 
@@ -73,39 +131,13 @@ void remove_value(Node *root, int value) {
 		}
 	}
 
-	int child_count = 0;
-
-	if (current->left != NULL) {
-		child_count++;
-	}
-
-	if (current->right != NULL) {
-		child_count++;
-	}
+	int child_count = get_child_count(current);
 
 	if (child_count == 0) {
-		Node_destroy(current);
+		remove_node_no_childs(current);
 	} else if (child_count == 1) {
-		Node *child;
-
-		if (current->left != NULL) {
-			child = current->left;
-		} else {
-			child = current->right;
-		}
-
-		current->value = child->value;
-		Node_destroy(child);
+		remove_node_one_child(current);
 	} else {
-		/*
-		 * if the right child node has a left child node:
-		 *	find the smallest value that is still bigger than the value we want to delete
-		 *	swap them and delete the leaf node witch now contains the value we want to delete
-		 *
-		 * if the right child node doesn't have a left child node:
-		 *	the right child is the successor to the value we want to delete
-		 *	swap the value and the value of the right child
-		 *	and delete the node we actually want to delete that now only has one child
-		 */
+		remove_node_two_childs(current);
 	}
 }
