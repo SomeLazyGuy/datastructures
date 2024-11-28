@@ -1,0 +1,3 @@
+rm bst
+clang -o bst main.c binary_search_tree.c
+./bst

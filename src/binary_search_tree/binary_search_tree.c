@@ -1,5 +1,6 @@
 #include "binary_search_tree.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 Node *Node_new(Node *parent, int value) {
 	Node *node = malloc(sizeof(Node));
@@ -22,6 +23,97 @@ void destroy_tree(Node *root) {
 	}
 
 	free(root);
+}
+
+int get_node_count(Node *root) {
+	if (root == NULL) {
+		return 0;
+	}
+
+	return 1 + get_node_count(root->left) + get_node_count(root->right);
+}
+
+void print_values(Node *root) {
+	if (root == NULL) {
+		return;
+	}
+
+	print_values(root->left);
+
+	printf("%d\n", root->value);
+
+	print_values(root->right);
+}
+
+void print_tree(Node *root, int level) {
+	if (root == NULL) {
+		return;
+	}
+
+	print_tree(root->right, level + 1);
+
+	for (int i = 0; i < 4 * level; i++) {
+		printf(" ");
+	}
+
+	printf("%d\n", root->value);
+
+	print_tree(root->left, level + 1);
+}
+
+int get_height(Node *root) {
+	if (root == NULL) {
+		return 0;
+	}
+
+	int height_left = get_height(root->left);
+	int height_right = get_height(root->right);
+
+	if (height_left < height_right) {
+		return 1 + height_right;
+	}
+
+	return 1 + height_left;
+}
+
+int get_min(Node *root) {
+	Node *current = root;
+
+	while (current->left != NULL) {
+		current = current->left;
+	}
+
+	return current->value;
+}
+
+int get_max(Node *root) {
+	Node *current = root;
+
+	while (current->right != NULL) {
+		current = current->right;
+	}
+
+	return current->value;
+}
+
+bool is_valid_bst(Node *root) {
+	if (root == NULL) {
+		return true;
+	}
+
+	if (root->left != NULL) {
+		if (root->left->value > root->value) {
+			return false;
+		}
+	}
+
+	if (root->right != NULL) {
+		if (root->right->value < root->value) {
+			return false;
+		}
+	}
+
+	return is_valid_bst(root->left) && is_valid_bst(root->right);
 }
 
 bool search_value(Node *root, int value) {
